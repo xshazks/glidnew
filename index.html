@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>GLID Monitoring – Orders & Detail</title>
+    <style>
+        :root {
+            --bg: #f6f7fb;
+            --card: #fff;
+            --ink: #0f172a;
+            --muted: #667085;
+            --line: #e2e8f0;
+            --blue: #2563eb;
+            --orange: #ea580c;
+            --violet: #7c3aed;
+            --radius: 14px;
+            --shadow: 0 6px 20px rgba(16, 24, 40, .06);
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font: 14px/1.5 "Segoe UI", Roboto, Arial, sans-serif
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #fafbff;
+            border-right: 1px solid var(--line);
+            padding: 20px;
+            display: none
+        }
+
+        @media(min-width:900px) {
+            .sidebar {
+                display: block
+            }
+        }
+
+        .brand {
+            font-weight: 800;
+            color: #1646b9;
+            margin: 0 0 16px
+        }
+
+        .nav .section {
+            margin: 18px 0 6px;
+            color: #9aa3b2;
+            text-transform: uppercase;
+            font-size: 11px
+        }
+
+        .nav button {
+            position: relative;
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 8px 10px;
+            border: 0;
+            background: transparent;
+            border-radius: 10px;
+            cursor: pointer
+        }
+
+        .nav button:hover {
+            background: #eef5ff
+        }
+
+        .nav-badge {
+            position: absolute;
+            right: 10px;
+            top: 7px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            background: #ef4444;
+            color: #fff;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            justify-content: center
+        }
+
+        /* Main & Header (header terpisah supaya selalu ada di semua view) */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: var(--bg);
+            padding: 16px 24px;
+            border-bottom: 1px solid #eef2f7
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: space-between
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 10px;
+            padding: 8px 12px;
+            cursor: pointer
+        }
+
+        .btn-orange {
+            background: var(--orange);
+            color: #fff
+        }
+
+        .input,
+        .select {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px 10px;
+            background: #fff
+        }
+
+        .icon-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #eef2ff;
+            border: 1px solid #e5e7eb;
+            cursor: pointer
+        }
+
+        .bell-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            justify-content: center
+        }
+
+        .notif-panel {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            width: min(380px, 92vw);
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            display: none
+        }
+
+        .notif-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            font-weight: 700
+        }
+
+        .notif-list {
+            max-height: 360px;
+            overflow: auto
+        }
+
+        .notif-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line)
+        }
+
+        .notif-item:last-child {
+            border-bottom: 0
+        }
+
+        .notif-title {
+            font-weight: 700;
+            margin: 0 0 4px
+        }
+
+        .notif-time {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        /* Content */
+        .content {
+            padding: 24px;
+            flex: 1
+        }
+
+        h1 {
+            margin: 0 0 14px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow)
+        }
+
+        /* Table */
+        .table-wrap {
+            overflow: auto
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 1100px;
+            font-size: 14px;
+            line-height: 1.5
+        }
+
+        thead {
+            background: #f1f5f9;
+            font-weight: 600
+        }
+
+        th,
+        td {
+            padding: 12px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--line);
+            vertical-align: top
+        }
+
+        th:first-child,
+        td:first-child {
+            padding-left: 28px
+        }
+
+        th:last-child,
+        td:last-child {
+            padding-right: 28px
+        }
+
+        tr:last-child td {
+            border-bottom: none
+        }
+
+        a.link {
+            color: #1d4ed8;
+            text-decoration: none;
+            font-weight: 500
+        }
+
+        a.link:hover {
+            text-decoration: underline
+        }
+
+        td.num {
+            text-align: right;
+            font-variant-numeric: tabular-nums
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            border: 2px solid transparent;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .15)
+        }
+
+        .posted {
+            background: linear-gradient(90deg, #1d4ed8, #2563eb);
+            border-color: #1e40af
+        }
+
+        .forwarded {
+            background: linear-gradient(90deg, #ea580c, #f97316);
+            border-color: #9a3412
+        }
+
+        .synced {
+            background: linear-gradient(90deg, #7c3aed, #9333ea);
+            border-color: #5b21b6
+        }
+
+        /* Detail */
+        .grid {
+            display: grid;
+            gap: 16px
+        }
+
+        @media(min-width:900px) {
+            .grid {
+                grid-template-columns: 1fr 1fr
+            }
+        }
+
+        .section-title {
+            font-weight: 700;
+            margin: 0 0 8px
+        }
+
+        .box {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px;
+            background: #fff
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .timeline {
+            position: relative;
+            border-left: 2px solid var(--blue);
+            margin-left: 16px;
+            padding-left: 16px
+        }
+
+        .tl-item {
+            position: relative;
+            margin: 18px 0
+        }
+
+        .tl-dot {
+            position: absolute;
+            left: -19px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2563eb
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 50
+        }
+
+        .modal.open {
+            display: flex
+        }
+
+        .modal-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            max-width: 900px;
+            width: min(92vw, 900px);
+            padding: 18px
+        }
+
+        .img-fluid {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+            border: 1px solid var(--line)
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .right {
+            margin-left: auto
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2 class="brand">GLID</h2>
+            <nav class="nav">
+                <div class="section">HOME</div>
+                <button id="menuDashboard">🏠 Dashboard <span id="navBadge" class="nav-badge">0</span></button>
+                <div class="section">SALES ORDER</div>
+                <button id="navOrders">Orders</button>
+                <div class="section">DASHBOARD</div>
+                <button>Dashboard Logistik</button>
+                <button>Billing</button>
+                <button>User Activity</button>
+            </nav>
+        </aside>
+
+        <!-- Main -->
+        <div class="main">
+            <!-- Header (selalu ada di semua halaman) -->
+            <header class="header">
+                <div class="header-row">
+                    <h1 id="pageTitle">orders</h1>
+                    <div class="toolbar">
+                        <button class="btn btn-orange">RELEASE ORDER</button>
+                        <select class="select">
+                            <option>This Month</option>
+                        </select>
+                        <input class="input" placeholder="Text to search..." />
+                        <div id="bellWrap" style="position:relative">
+                            <button id="btnBell" class="icon-btn" aria-label="Notifikasi">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M14 20a2 2 0 1 1-4 0" stroke="#334155" stroke-width="1.6"
+                                        stroke-linecap="round" />
+                                    <path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="#334155"
+                                        stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <span id="bellDot" class="bell-dot">0</span>
+                            </button>
+                            <div id="notifPanel" class="notif-panel" role="dialog" aria-label="Panel Notifikasi">
+                                <div class="notif-header">
+                                    <span>Notifikasi</span>
+                                    <button id="btnClearNotif" class="btn"
+                                        style="padding:6px 10px;border:1px solid var(--line)">Tandai sudah
+                                        dibaca</button>
+                                </div>
+                                <div id="notifList" class="notif-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- Orders -->
+                <section id="viewOrders">
+                    <div class="card table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Order No.</th>
+                                    <th>Tgl. Order</th>
+                                    <th>Customer</th>
+                                    <th>Lokasi Muat</th>
+                                    <th>Lokasi Bongkar</th>
+                                    <th class="num">Ongkos Angkut (OA)</th>
+                                    <th>Status</th>
+                                    <th>Tipe Armada</th>
+                                    <th>Kantor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Detail -->
+                <section id="viewDetail" style="display:none">
+                    <button id="btnBack" class="btn" style="border:1px solid var(--line)">Kembali ke Dashboard</button>
+                    <h2 id="detailTitle" style="margin:12px 0 0;font-size:22px">Detail Order – </h2>
+
+                    <div class="grid" style="margin:16px 0">
+                        <div class="card" style="padding:16px">
+                            <h3 class="section-title">Informasi Order</h3>
+                            <div id="infoBox" class="box"></div>
+                        </div>
+                        <div class="card" style="padding:16px">
+                            <h3 class="section-title">Status Terkini</h3>
+                            <div class="box">
+                                <span id="badgeStatus" class="badge posted">Posted</span>
+                                <div class="muted" id="lastUpdate" style="margin:6px 0 10px">Diperbarui: -</div>
+                                <button id="btnBukti" class="btn" style="border:1px solid var(--line)">Unduh Bukti
+                                    Posting</button>
+                                <a id="openWeb" class="link" href="#" target="_blank" style="margin-left:8px">Buka di
+                                    Web Monitoring</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding:18px">
+                        <h3 class="section-title" style="margin-bottom:10px">Riwayat Status Order</h3>
+                        <div id="timeline" class="timeline"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal" aria-hidden="true">
+        <div class="modal-card">
+            <div class="row" style="align-items:center;margin-bottom:10px">
+                <strong style="font-size:18px">Bukti Posting – GLID</strong>
+                <button id="closeModal" class="btn" style="border:1px solid var(--line)">Tutup</button>
+            </div>
+            <img id="buktiImg" class="img-fluid"
+                src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' width='1200' height='650'><rect width='100%' height='100%' fill='%23eef2ff'/><text x='50%' y='50%' font-size='28' text-anchor='middle' fill='%23333' font-family='Arial'>Preview bukti (ganti src ke file SS kamu)</text></svg>"
+                alt="Bukti Posting" />
+            <div class="row" style="margin-top:10px;align-items:center">
+                <span class="muted">Status: Sudah diposting & terverifikasi SAP</span>
+                <a id="downloadBukti" class="btn right" href="#" download style="border:1px solid var(--line)">Unduh
+                    Bukti</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /** ---------- data contoh ---------- */
+        const rows = [
+            { no: 'GLID-2025-001', tgl: '10/10/2025', cust: 'PT Nusantara Logistik', muat: 'KC Bandung', bongkar: 'KC Jakarta', oa: '4,500,000', status: 'Posted', armada: 'CDD', kantor: 'KC Bandung', update: '10 Okt 2025, 08:30' },
+            { no: 'GLID-2025-002', tgl: '10/10/2025', cust: 'CV Cipta Abadi', muat: 'KC Solo', bongkar: 'KC Yogya', oa: '2,200,000', status: 'Forwarded', armada: 'CDD Long', kantor: 'KCU Solo', update: '10 Okt 2025, 09:15' },
+            { no: 'GLID-2025-003', tgl: '10/10/2025', cust: 'PT Prima Cargo', muat: 'KC Bekasi', bongkar: 'KC Surabaya', oa: '3,600,000', status: 'Synced', armada: 'Wingbox 30T', kantor: 'KC Bekasi', update: '10 Okt 2025, 09:40' }
+        ];
+
+        /** ---------- notif utils (aman & dedup) ---------- */
+        const LS_NOTIFS = 'glid_notifs_v1';
+        const LS_SEEN = 'glid_notifs_seen_ids_v1'; // set of orderNo yang sudah pernah dibuat notifnya
+        const safeParse = (j) => { try { const p = JSON.parse(j); return Array.isArray(p) ? p : [] } catch { return [] } };
+        const safeParseSet = (j) => { try { const p = JSON.parse(j); return Array.isArray(p) ? new Set(p) : new Set() } catch { return new Set() } };
+
+        const getNotifs = () => safeParse(localStorage.getItem(LS_NOTIFS));
+        const setNotifs = (arr) => localStorage.setItem(LS_NOTIFS, JSON.stringify(Array.isArray(arr) ? arr : []));
+        const getSeen = () => safeParseSet(localStorage.getItem(LS_SEEN));
+        const setSeen = (set) => localStorage.setItem(LS_SEEN, JSON.stringify(Array.from(set)));
+
+        function renderNotif() {
+            const notifs = getNotifs();
+            const n = notifs.length;
+            const navBadge = document.getElementById('navBadge');
+            const bellDot = document.getElementById('bellDot');
+            const notifList = document.getElementById('notifList');
+            if (navBadge) { navBadge.style.display = n > 0 ? 'inline-flex' : 'none'; navBadge.textContent = n; }
+            if (bellDot) { bellDot.style.display = n > 0 ? 'inline-flex' : 'none'; bellDot.textContent = n; }
+            if (notifList) {
+                notifList.innerHTML = n === 0
+                    ? '<div class="notif-item"><span class="muted">Tidak ada notifikasi.</span></div>'
+                    : notifs.map(x => `
+                  <div class="notif-item">
+                    <div class="notif-title">${x.title}</div>
+                    <div>${x.desc}</div>
+                    <div class="notif-time">${x.time}</div>
+                  </div>`).join('');
+            }
+        }
+
+        // seed awal: Boleh diaktifkan kalau mau tampil 1 notifikasi default waktu pertama load.
+        // Kalau nggak perlu seed, tinggal comment 4 baris di bawah.
+        if (getNotifs().length === 0) {
+            setNotifs([{ id: 'seed', title: 'Selamat datang', desc: 'Pantau status GLID di sini.', time: new Date().toLocaleString() }]);
+        }
+        renderNotif();
+
+        // fungsi resmi untuk nambah notif dari EVENT SISTEM (bukan klik)
+        function systemAddNotification(orderNo, title, desc) {
+            const seen = getSeen();
+            if (seen.has(orderNo)) { return; }        // sudah pernah dibuat → skip
+            const notifs = getNotifs();
+            notifs.unshift({ id: Date.now(), title, desc, time: new Date().toLocaleString() });
+            setNotifs(notifs);
+            seen.add(orderNo);
+            setSeen(seen);
+            renderNotif();
+        }
+
+        // wiring bell
+        (function setupBell() {
+            const btnBell = document.getElementById('btnBell');
+            const panel = document.getElementById('notifPanel');
+            const btnClear = document.getElementById('btnClearNotif');
+            if (!btnBell || !panel) return;
+            btnBell.addEventListener('click', e => {
+                e.stopPropagation();
+                panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+            });
+            document.addEventListener('click', e => {
+                const wrap = document.getElementById('bellWrap');
+                if (wrap && !wrap.contains(e.target)) panel.style.display = 'none';
+            });
+            if (btnClear) {
+                btnClear.addEventListener('click', () => {
+                    setNotifs([]); renderNotif(); panel.style.display = 'none';
+                });
+            }
+        })();
+
+        /** ---------- render orders ---------- */
+        const $tbody = document.getElementById('ordersBody');
+        rows.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+            <td><a class="link open">${r.no}</a></td>
+            <td><a class="link open">${r.tgl}</a></td>
+            <td>${r.cust}</td>
+            <td>${r.muat}</td>
+            <td>${r.bongkar}</td>
+            <td class="num">${r.oa}</td>
+            <td>
+              <button class="badge ${badgeClass(r.status)} open" type="button">${r.status}</button>
+              <a class="link" href="https://monitor.glid.id/status?order=${r.no}" target="_blank"></a>
+            </td>
+            <td>${r.armada}</td>
+            <td>${r.kantor}</td>`;
+            tr.querySelectorAll('.open').forEach(el => el.addEventListener('click', () => openDetail(r)));
+            $tbody.appendChild(tr);
+        });
+
+        function badgeClass(st) {
+            const s = (st || '').toLowerCase();
+            if (s.includes('sync')) return 'synced';
+            if (s.includes('forward')) return 'forwarded';
+            return 'posted';
+        }
+
+        /** ---------- detail logic (tanpa nambah notif!) ---------- */
+        const viewOrders = document.getElementById('viewOrders');
+        const viewDetail = document.getElementById('viewDetail');
+        const detailTitle = document.getElementById('detailTitle');
+        const infoBox = document.getElementById('infoBox');
+        const badgeStatus = document.getElementById('badgeStatus');
+        const lastUpdate = document.getElementById('lastUpdate');
+        const timelineEl = document.getElementById('timeline');
+        const openWeb = document.getElementById('openWeb');
+        const pageTitle = document.getElementById('pageTitle');
+
+        function openDetail(r) {
+            detailTitle.textContent = 'Detail Order – ' + (r.no || '-');
+            if (pageTitle) pageTitle.textContent = 'orders';
+            infoBox.innerHTML = `
+            <p><b>Nomor Order:</b> ${r.no || '-'}</p>
+            <p><b>Customer:</b> ${r.cust || '-'}</p>
+            <p><b>Jenis Order:</b> Pengiriman Logistik</p>
+            <p><b>Tanggal Input:</b> ${r.tgl || '-'}</p>
+            <p><b>PIC KC:</b> Budi Santoso</p>`;
+            if (badgeStatus) { badgeStatus.textContent = r.status || '-'; badgeStatus.className = 'badge ' + badgeClass(r.status); }
+            if (lastUpdate) lastUpdate.textContent = 'Diperbarui: ' + (r.update || '-');
+            if (openWeb) openWeb.href = `https://monitor.glid.id/status?order=${encodeURIComponent(r.no || '')}`;
+
+            const steps = [
+                ['Submitted', '10 Okt 2025, 07:30', 'KC Bandung'],
+                ['Posted', '10 Okt 2025, 08:30', 'Pusat'],
+                ['Synced', '10 Okt 2025, 09:00', 'Sistem SAP'],
+                ['Forwarded', '10 Okt 2025, 09:15', 'Regional Jawa Barat'],
+                ['Archived', '10 Okt 2025, 09:30', 'Regional Pembukuan'],
+            ];
+            if (timelineEl) {
+                timelineEl.innerHTML = steps.map(([s, t, by]) => `
+              <div class="tl-item">
+                <span class="tl-dot"></span>
+                <div><b>${s}</b></div>
+                <div class="muted" style="font-size:13px">${t} — ${by}</div>
+              </div>`).join('');
+            }
+            if (viewOrders && viewDetail) { viewOrders.style.display = 'none'; viewDetail.style.display = 'block'; }
+        }
+
+        document.getElementById('btnBack')?.addEventListener('click', () => {
+            if (viewDetail && viewOrders) { viewDetail.style.display = 'none'; viewOrders.style.display = 'block'; }
+        });
+        document.getElementById('navOrders')?.addEventListener('click', () => {
+            if (viewDetail && viewOrders) { viewDetail.style.display = 'none'; viewOrders.style.display = 'block'; }
+        });
+
+        /** ---------- modal bukti ---------- */
+        const modal = document.getElementById('modal');
+        const btnBukti = document.getElementById('btnBukti');
+        const closeModal = document.getElementById('closeModal');
+        const downloadBukti = document.getElementById('downloadBukti');
+        const buktiImg = document.getElementById('buktiImg');
+        btnBukti?.addEventListener('click', () => { modal.classList.add('open'); if (downloadBukti && buktiImg) downloadBukti.href = buktiImg.src; });
+        closeModal?.addEventListener('click', () => modal.classList.remove('open'));
+
+        /** ---------- (opsional) tombol simulasi event sistem ---------- */
+        // Contoh: panggil saat backend konfirmasi "posting sukses"
+        // systemAddNotification('GLID-2025-002','Data Anda telah diposting', 'GLID-2025-002 (CV Cipta Abadi) sudah diposting & diteruskan.');
+    </script>
+
+</body>
+
+</html>
